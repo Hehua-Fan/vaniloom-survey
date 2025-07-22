@@ -22,8 +22,8 @@ const formSchema = z.object({
   age: z.string().min(1, '请选择您的年龄'),
   gender: z.string().min(1, '请选择您的性别'),
   orientation: z.string().min(1, '请选择您的性取向'),
-  ao3Content: z.string().min(1, '请填写您在ao3上的观看内容和时间'),
-  favoriteCpTags: z.string().min(1, '请填写您喜欢的cp和tags'),
+  ao3Content: z.string().optional(),
+  favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
 })
 
@@ -321,19 +321,19 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 7. ao3内容 */}
+        {/* 7. ao3内容（非必填） */}
         <FormField
           control={form.control}
           name="ao3Content"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
+                {/* 非必填，不显示红色星号 */}
                 7. 您最近3次在ao3上看的内容是什么？是几点钟的时候看的？
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="请详细描述您最近在ao3上的阅读内容和时间"
+                  placeholder="请详细描述您最近在ao3上的阅读内容和时间（可选）"
                   className="min-h-[120px]"
                   {...field}
                 />
@@ -343,19 +343,19 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 8. 喜欢的cp和tags */}
+        {/* 8. 喜欢的cp和tags（非必填） */}
         <FormField
           control={form.control}
           name="favoriteCpTags"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
+                {/* 非必填，不显示红色星号 */}
                 8. 您在ao3上或其他同人/二创平台上最喜欢的cp和tags是什么？冷门的也可以推荐给我们哦~
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="请分享您喜欢的cp和tags"
+                  placeholder="请分享您喜欢的cp和tags（可选）"
                   className="min-h-[120px]"
                   {...field}
                 />

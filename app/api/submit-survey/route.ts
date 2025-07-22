@@ -16,8 +16,8 @@ const surveySchema = z.object({
   age: z.string().min(1, '请选择您的年龄'),
   gender: z.string().min(1, '请选择您的性别'),
   orientation: z.string().min(1, '请选择您的性取向'),
-  ao3Content: z.string().min(1, '请填写您在ao3上的观看内容和时间'),
-  favoriteCpTags: z.string().min(1, '请填写您喜欢的cp和tags'),
+  ao3Content: z.string().optional(),
+  favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
 })
 
