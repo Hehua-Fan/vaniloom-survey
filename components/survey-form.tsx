@@ -25,6 +25,7 @@ const formSchema = z.object({
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
+  otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -89,8 +90,13 @@ export default function SurveyForm() {
       ao3Content: '',
       favoriteCpTags: '',
       identity: [],
+      otherIdentity: '', // 新增默认值
     },
   })
+
+  // 监听身份选择，判断是否选择了"其他"或"相关从业者"
+  const identityValues = form.watch('identity')
+  const showOtherInput = identityValues?.includes('other') || identityValues?.includes('professional')
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true)
@@ -106,9 +112,10 @@ export default function SurveyForm() {
         age: values.age,
         gender: values.gender,
         orientation: values.orientation,
-        ao3Content: values.ao3Content,
-        favoriteCpTags: values.favoriteCpTags,
+        ao3Content: values.ao3Content || '',
+        favoriteCpTags: values.favoriteCpTags || '',
         identity: values.identity,
+        otherIdentity: values.otherIdentity || '', // 包含其他身份描述
       }
 
       const response = await fetch('/api/submit-survey', {
@@ -132,6 +139,7 @@ export default function SurveyForm() {
           ao3Content: '',
           favoriteCpTags: '',
           identity: [],
+          otherIdentity: '',
         })
       } else {
         toast.error('提交失败，请重试')
@@ -409,6 +417,32 @@ export default function SurveyForm() {
                 ))}
               </div>
               <FormMessage />
+              
+              {/* 动态显示的"其他"输入框 */}
+              {showOtherInput && (
+                <FormField
+                  control={form.control}
+                  name="otherIdentity"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormLabel className="text-sm font-medium text-gray-600">
+                        {identityValues?.includes('professional') ? '请填写具体职位' : '请填写其他身份'}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={
+                            identityValues?.includes('professional') 
+                              ? "例如：产品经理、设计师、工程师等" 
+                              : "请详细描述您的身份"
+                          }
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </FormItem>
           )}
         />

@@ -19,6 +19,7 @@ const surveySchema = z.object({
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
+  otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
 })
 
 export async function POST(request: NextRequest) {

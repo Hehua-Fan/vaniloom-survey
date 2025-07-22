@@ -18,6 +18,7 @@ export interface SurveyFormData {
   ao3Content: string
   favoriteCpTags: string
   identity: string[]
+  otherIdentity?: string // 新增：其他身份的具体描述
 }
 
 // 生成内测账号邮件HTML模板
@@ -114,8 +115,18 @@ export function generateBetaAccountEmail(account: BetaAccount, userName: string)
 
 // 生成表单内容邮件HTML模板（发送给管理员）
 export function generateSurveyFormEmail(formData: SurveyFormData, assignedAccount: BetaAccount): string {
-  // 格式化身份数组
-  const identityText = formData.identity.length > 0 ? formData.identity.join(', ') : '未选择'
+  // 格式化身份数组，如果有otherIdentity则加上具体描述
+  let identityText = formData.identity.length > 0 ? formData.identity.join(', ') : '未选择'
+  
+  // 如果选择了"其他"或"相关从业者"且填写了具体内容，则添加详细描述
+  if (formData.otherIdentity && formData.otherIdentity.trim()) {
+    if (formData.identity.includes('other')) {
+      identityText = identityText.replace('其他（请填写）', `其他（${formData.otherIdentity}）`)
+    }
+    if (formData.identity.includes('professional')) {
+      identityText = identityText.replace('相关从业者（请填写职位）', `相关从业者（${formData.otherIdentity}）`)
+    }
+  }
   
   // 年龄选项映射
   const ageMap: { [key: string]: string } = {
@@ -263,11 +274,11 @@ export function generateSurveyFormEmail(formData: SurveyFormData, assignedAccoun
             <h3 style="color: #1f2937; margin-top: 0;">内容偏好</h3>
             <div class="field">
               <div class="field-label">最近在ao3上看的内容和时间</div>
-              <div class="field-value">${formData.ao3Content}</div>
+              <div class="field-value">${formData.ao3Content || '未填写'}</div>
             </div>
             <div class="field">
               <div class="field-label">喜欢的cp和tags</div>
-              <div class="field-value">${formData.favoriteCpTags}</div>
+              <div class="field-value">${formData.favoriteCpTags || '未填写'}</div>
             </div>
           </div>
 
