@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'react-hot-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle, Mail } from 'lucide-react'
 
 const formSchema = z.object({
   name: z.string().min(1, '请输入您的称呼'),
@@ -76,6 +76,8 @@ const emailDomainOptions = [
 
 export default function SurveyForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false) // 新增：提交成功状态
+  const [submittedEmail, setSubmittedEmail] = useState('') // 新增：记录提交的邮箱
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -127,22 +129,13 @@ export default function SurveyForm() {
       })
 
       if (response.ok) {
+        // 提交成功，切换到成功状态
+        setSubmittedEmail(email)
+        setIsSubmitted(true)
         toast.success('问卷提交成功！内测账号将发送到您的邮箱')
-        form.reset({
-          name: '',
-          emailUsername: '',
-          emailDomain: 'gmail.com',
-          contact: '',
-          age: '',
-          gender: '',
-          orientation: '',
-          ao3Content: '',
-          favoriteCpTags: '',
-          identity: [],
-          otherIdentity: '',
-        })
       } else {
-        toast.error('提交失败，请重试')
+        const errorData = await response.json()
+        toast.error(errorData.message || '提交失败，请重试')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -150,6 +143,96 @@ export default function SurveyForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // 成功页面组件
+  const SuccessPage = () => (
+    <div className="max-w-2xl mx-auto text-center space-y-8 py-12">
+      {/* 成功图标 */}
+      <div className="flex justify-center">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center">
+          <CheckCircle className="w-12 h-12 text-green-600" />
+        </div>
+      </div>
+
+      {/* 成功标题 */}
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold text-gray-900">
+          🎉 提交成功！
+        </h1>
+        <p className="text-xl text-gray-600">
+          感谢您加入 Vaniloom 内测！
+        </p>
+      </div>
+
+      {/* 详细信息 */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-4">
+        <div className="flex items-center justify-center space-x-2 text-blue-800">
+          <Mail className="w-5 h-5" />
+          <span className="font-medium">内测账号发送中</span>
+        </div>
+        <p className="text-blue-700">
+          您的内测账号将发送到：<span className="font-mono font-medium">{submittedEmail}</span>
+        </p>
+        <p className="text-sm text-blue-600">
+          请注意查收邮件，如果没有收到，请检查垃圾邮件文件夹
+        </p>
+      </div>
+
+      {/* 温馨提示 */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 space-y-3">
+        <h3 className="text-lg font-semibold text-purple-800">
+          🌟 接下来该做什么？
+        </h3>
+        <ul className="text-left text-purple-700 space-y-2">
+          <li className="flex items-start space-x-2">
+            <span className="text-purple-500 mt-1">•</span>
+            <span>查收邮件中的内测账号信息</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-purple-500 mt-1">•</span>
+            <span>使用账号登录 Vaniloom 开始体验</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-purple-500 mt-1">•</span>
+            <span>探索您喜欢的 CP 和内容</span>
+          </li>
+          <li className="flex items-start space-x-2">
+            <span className="text-purple-500 mt-1">•</span>
+            <span>给我们反馈，帮助我们改进产品</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* 感谢信息 */}
+      <div className="space-y-4">
+        <p className="text-lg text-gray-700">
+          让我们一起创造一个冷门 CP 都能吃上饭的世界！
+        </p>
+        <p className="text-sm text-gray-500">
+          如有任何问题，请联系我们的客服团队
+        </p>
+      </div>
+
+      {/* 返回按钮（可选） */}
+      <div className="pt-8">
+        <Button
+          onClick={() => {
+            setIsSubmitted(false)
+            form.reset()
+          }}
+          variant="outline"
+          className="px-8 py-2"
+        >
+          重新填写问卷
+        </Button>
+      </div>
+    </div>
+  )
+
+  // 如果已提交成功，显示成功页面
+  if (isSubmitted) {
+    return <SuccessPage />
   }
 
   return (
