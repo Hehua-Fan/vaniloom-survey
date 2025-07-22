@@ -6,7 +6,7 @@ import {
   isEmailAlreadyAssigned,
   getAvailableAccountsCount 
 } from '@/lib/beta-accounts'
-import { sendBetaAccountEmail } from '@/lib/email'
+import { sendBetaAccountEmail, sendSurveyFormToAdmin, SurveyFormData } from '@/lib/email'
 
 // 验证表单数据的schema
 const surveySchema = z.object({
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const formData = validationResult.data
 
     // 检查邮箱是否已经分配过账号
-    const existingAccount = isEmailAlreadyAssigned(formData.email)
+    const existingAccount = await isEmailAlreadyAssigned(formData.email)
     if (existingAccount) {
       return NextResponse.json(
         { 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查是否还有可用的内测账号
-    const availableCount = getAvailableAccountsCount()
+    const availableCount = await getAvailableAccountsCount()
     if (availableCount === 0) {
       return NextResponse.json(
         { 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 获取下一个可用账号
-    const availableAccount = getNextAvailableAccount()
+    const availableAccount = await getNextAvailableAccount()
     if (!availableAccount) {
       return NextResponse.json(
         { 
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 分配账号
-    const assignSuccess = assignAccount(availableAccount.id, formData.email)
+    const assignSuccess = await assignAccount(availableAccount.id, formData.email)
     if (!assignSuccess) {
       return NextResponse.json(
         { 
@@ -87,15 +87,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 发送邮件
-    const emailSent = await sendBetaAccountEmail(
+    // 发送用户邮件
+    const userEmailSent = await sendBetaAccountEmail(
       formData.email,
       formData.name,
       availableAccount
     )
 
-    if (!emailSent) {
-      console.error('邮件发送失败，但账号已分配:', {
+    // 发送管理员邮件（表单内容）
+    const adminEmailSent = await sendSurveyFormToAdmin(
+      formData as SurveyFormData,
+      availableAccount
+    )
+
+    // 根据邮件发送结果返回相应的响应
+    if (!userEmailSent && !adminEmailSent) {
+      console.error('用户邮件和管理员邮件都发送失败:', {
         email: formData.email,
         account: availableAccount.username
       })
@@ -111,6 +118,31 @@ export async function POST(request: NextRequest) {
         },
         { status: 207 } // Multi-Status: 部分成功
       )
+    } else if (!userEmailSent) {
+      console.error('用户邮件发送失败，但管理员邮件发送成功:', {
+        email: formData.email,
+        account: availableAccount.username
+      })
+      
+      return NextResponse.json(
+        { 
+          error: '用户邮件发送失败',
+          message: '您的内测账号已分配，但邮件发送失败。请联系客服获取账号信息。',
+          account: {
+            username: availableAccount.username,
+            password: availableAccount.password
+          }
+        },
+        { status: 207 } // Multi-Status: 部分成功
+      )
+    } else if (!adminEmailSent) {
+      console.error('管理员邮件发送失败，但用户邮件发送成功:', {
+        email: formData.email,
+        account: availableAccount.username
+      })
+      
+      // 用户邮件发送成功，管理员邮件失败不影响用户体验
+      console.log('管理员邮件发送失败，但不影响用户操作')
     }
 
     // 记录提交信息（在实际项目中，你可能想要保存到数据库）
@@ -119,7 +151,9 @@ export async function POST(request: NextRequest) {
       email: formData.email,
       name: formData.name,
       assignedAccount: availableAccount.username,
-      remainingAccounts: getAvailableAccountsCount()
+      remainingAccounts: await getAvailableAccountsCount(),
+      userEmailSent,
+      adminEmailSent
     })
 
     return NextResponse.json(
@@ -130,7 +164,7 @@ export async function POST(request: NextRequest) {
           username: availableAccount.username,
           // 出于安全考虑，在响应中不返回密码
         },
-        remainingAccounts: getAvailableAccountsCount()
+        remainingAccounts: await getAvailableAccountsCount()
       },
       { status: 200 }
     )
