@@ -19,6 +19,7 @@ export interface SurveyFormData {
   favoriteCpTags: string
   identity: string[]
   otherIdentity?: string // 新增：其他身份的具体描述
+  acceptFollowUp: string // 新增：是否接受回访
 }
 
 // 生成内测账号邮件HTML模板
@@ -287,6 +288,10 @@ export function generateSurveyFormEmail(formData: SurveyFormData, assignedAccoun
             <div class="field">
               <div class="field-label">身份类型</div>
               <div class="field-value">${identityText}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">是否愿意接受线上回访</div>
+              <div class="field-value">${formData.acceptFollowUp === 'yes' ? '是，愿意接受回访' : '否，不愿意接受回访'}</div>
             </div>
           </div>
 

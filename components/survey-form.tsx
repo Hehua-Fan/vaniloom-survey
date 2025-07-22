@@ -26,6 +26,7 @@ const formSchema = z.object({
   favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
   otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
+  acceptFollowUp: z.string().min(1, '请选择是否愿意接受回访'), // 新增：是否接受回访
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -93,6 +94,7 @@ export default function SurveyForm() {
       favoriteCpTags: '',
       identity: [],
       otherIdentity: '', // 新增默认值
+      acceptFollowUp: '', // 新增：回访选择默认值
     },
   })
 
@@ -118,6 +120,7 @@ export default function SurveyForm() {
         favoriteCpTags: values.favoriteCpTags || '',
         identity: values.identity,
         otherIdentity: values.otherIdentity || '', // 包含其他身份描述
+        acceptFollowUp: values.acceptFollowUp, // 新增：是否接受回访
       }
 
       const response = await fetch('/api/submit-survey', {
@@ -526,6 +529,41 @@ export default function SurveyForm() {
                   )}
                 />
               )}
+            </FormItem>
+          )}
+        />
+
+        {/* 10. 线上回访 */}
+        <FormField
+          control={form.control}
+          name="acceptFollowUp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-lg font-medium flex items-center">
+                <span className="text-red-500 mr-1">*</span>
+                10. 您是否愿意接受团队开发人员的线上回访？（微信或线上会议）
+              </FormLabel>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="followup-yes" />
+                    <label htmlFor="followup-yes" className="cursor-pointer">
+                      是，愿意接受回访
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="followup-no" />
+                    <label htmlFor="followup-no" className="cursor-pointer">
+                      否，不愿意接受回访
+                    </label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

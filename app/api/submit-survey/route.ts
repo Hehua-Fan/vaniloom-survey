@@ -20,6 +20,7 @@ const surveySchema = z.object({
   favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, '请至少选择一个身份'),
   otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
+  acceptFollowUp: z.string().min(1, '请选择是否愿意接受回访'), // 新增：是否接受回访
 })
 
 export async function POST(request: NextRequest) {
