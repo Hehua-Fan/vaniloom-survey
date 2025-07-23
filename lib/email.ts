@@ -270,7 +270,7 @@ export function generateSurveyFormEmail(formData: SurveyFormData, assignedAccoun
               <div class="field-value">${orientationMap[formData.orientation] || formData.orientation}</div>
             </div>
           </div>
-
+          
           <div class="form-section">
             <h3 style="color: #1f2937; margin-top: 0;">内容偏好</h3>
             <div class="field">
