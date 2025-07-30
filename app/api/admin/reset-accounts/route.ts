@@ -1,34 +1,44 @@
 import { NextResponse } from 'next/server'
-import { resetAccountsState } from '@/lib/beta-accounts'
+import { resetAllAccounts } from '@/lib/beta-accounts'
 
 export async function POST() {
   try {
-    await resetAccountsState()
+    const success = await resetAllAccounts()
     
-    return NextResponse.json(
-      { 
-        success: true,
-        message: '所有账号状态已重置'
-      },
-      { status: 200 }
-    )
+    if (success) {
+      return NextResponse.json(
+        { 
+          success: true,
+          message: 'All account states have been reset'
+        },
+        { status: 200 }
+      )
+    } else {
+      return NextResponse.json(
+        { 
+          error: 'Reset failed',
+          message: 'Failed to reset account states'
+        },
+        { status: 500 }
+      )
+    }
   } catch (error) {
-    console.error('重置账号状态时发生错误:', error)
+    console.error('Error resetting account states:', error)
     
     return NextResponse.json(
       { 
-        error: '服务器内部错误',
-        message: '重置账号状态失败'
+        error: 'Internal server error',
+        message: 'Failed to reset account states'
       },
       { status: 500 }
     )
   }
 }
 
-// 处理不支持的HTTP方法
+// Handle unsupported HTTP methods
 export async function GET() {
   return NextResponse.json(
-    { error: '方法不被支持' },
+    { error: 'Method not supported' },
     { status: 405 }
   )
 } 

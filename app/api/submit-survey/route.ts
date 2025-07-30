@@ -11,11 +11,11 @@ import { supabase, SurveyResponse } from '@/lib/supabase'
 
 // Survey form data validation schema
 const surveySchema = z.object({
-  name: z.string().min(1, 'Please enter your name'),
+  name: z.string().min(1, 'Please enter your nickname'),
   email: z.string().email('Please enter a valid email address'),
-  contact: z.string().min(1, 'Please enter your phone number or WeChat'),
+  contact: z.string().optional(), // Now optional since not collected in new form
   age: z.string().min(1, 'Please select your age'),
-  gender: z.string().min(1, 'Please select your gender'),
+  gender: z.string().min(1, 'Please select your gender identity'),
   orientation: z.string().min(1, 'Please select your sexual orientation'),
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     const surveyData: Omit<SurveyResponse, 'id' | 'created_at' | 'updated_at'> = {
       name: formData.name,
       email: formData.email,
-      contact: formData.contact,
+      contact: formData.contact || undefined, // Now properly optional
       age: formData.age,
       gender: formData.gender,
       orientation: formData.orientation,

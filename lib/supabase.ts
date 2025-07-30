@@ -21,7 +21,7 @@ export interface SurveyResponse {
   id?: string
   name: string
   email: string
-  contact: string
+  contact?: string  // Made optional since no longer collected in new form
   age: string
   gender: string
   orientation: string

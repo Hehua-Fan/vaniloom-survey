@@ -29,9 +29,14 @@ export default function RootPage() {
       <div className="max-w-4xl mx-auto p-8">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="mb-8">
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Welcome to the first round of internal beta testing for Vaniloom!
+            </p>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              Vaniloom is a personalized creative platform for fanfiction and derivative works.
+            </p>
             <p className="text-gray-700 leading-relaxed">
-              Welcome to Vaniloom's first beta test! Vaniloom is a personalized fanfiction/fan content creation platform for North America, currently supporting English only.
-              Your beta testing personal information will be kept strictly private. We will immediately send you a beta account to your WeChat or email after receiving your survey response. Thank you for your support!
+              Thank you for helping us build a better Vaniloom! Your responses remain confidential and will be used only in aggregate.
             </p>
           </div>
           

@@ -15,64 +15,65 @@ import { toast } from 'react-hot-toast'
 import { Loader2, CheckCircle, Mail } from 'lucide-react'
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Please enter your name'),
-  emailUsername: z.string().min(1, 'Please enter email username'),
-  emailDomain: z.string().min(1, 'Please select email type'),
-  contact: z.string().min(1, 'Please enter your phone or WeChat'),
+  name: z.string().min(1, 'Please enter your nickname'),
+  email: z.string().email('Please enter a valid email address'),
+  acceptFollowUp: z.string().min(1, 'Please select whether you accept follow-up interviews'),
   age: z.string().min(1, 'Please select your age'),
-  gender: z.string().min(1, 'Please select your gender'),
+  gender: z.string().min(1, 'Please select your gender identity'),
+  genderSelfDescribe: z.string().optional(),
   orientation: z.string().min(1, 'Please select your sexual orientation'),
+  orientationSelfDescribe: z.string().optional(),
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
   identity: z.array(z.string()).min(1, 'Please select at least one identity'),
   otherIdentity: z.string().optional(),
-  acceptFollowUp: z.string().min(1, 'Please select whether you accept follow-up interviews'),
 })
 
 type FormData = z.infer<typeof formSchema>
 
 const ageOptions = [
   { value: 'under-12', label: 'Under 12' },
-  { value: '12-17', label: '12-17' },
-  { value: '18-22', label: '18-22' },
-  { value: '23-28', label: '23-28' },
-  { value: '29-34', label: '29-34' },
-  { value: '35-plus', label: '35 and above' },
+  { value: '12-17', label: '12–17' },
+  { value: '18-22', label: '18–22' },
+  { value: '23-28', label: '23–28' },
+  { value: '29-34', label: '29–34' },
+  { value: '35-plus', label: '35 or older' },
   { value: 'prefer-not-say', label: 'Prefer not to say' },
 ]
 
 const genderOptions = [
-  { value: 'female', label: 'Female' },
-  { value: 'male', label: 'Male' },
-  { value: 'other', label: 'Other' },
+  { value: 'agender', label: 'Agender' },
+  { value: 'genderqueer', label: 'Genderqueer / Gender‑fluid' },
+  { value: 'man', label: 'Man' },
+  { value: 'non-binary', label: 'Non‑binary' },
+  { value: 'trans-man', label: 'Trans man' },
+  { value: 'trans-woman', label: 'Trans woman' },
+  { value: 'two-spirit', label: 'Two‑Spirit' },
+  { value: 'woman', label: 'Woman' },
+  { value: 'questioning', label: 'Questioning / Unsure' },
+  { value: 'self-describe', label: 'Prefer to self‑describe' },
+  { value: 'prefer-not-answer', label: 'Prefer not to answer' },
 ]
 
 const orientationOptions = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'both', label: 'Both' },
-  { value: 'other', label: 'Other' },
+  { value: 'asexual', label: 'Asexual' },
+  { value: 'bisexual', label: 'Bisexual' },
+  { value: 'gay', label: 'Gay' },
+  { value: 'lesbian', label: 'Lesbian' },
+  { value: 'pansexual', label: 'Pansexual' },
+  { value: 'queer', label: 'Queer' },
+  { value: 'straight', label: 'Straight / Heterosexual' },
+  { value: 'questioning', label: 'Questioning / Unsure' },
+  { value: 'self-describe', label: 'Prefer to self‑describe' },
+  { value: 'prefer-not-answer', label: 'Prefer not to answer' },
 ]
 
 const identityOptions = [
   { value: 'reader', label: 'Reader' },
   { value: 'creator', label: 'Creator' },
-  { value: 'professional', label: 'Industry Professional (please specify position)' },
+  { value: 'professional', label: 'Industry professional (please specify your job)' },
   { value: 'investor', label: 'Investor' },
   { value: 'other', label: 'Other (please specify)' },
-]
-
-const emailDomainOptions = [
-  { value: 'gmail.com', label: '@gmail.com' },
-  { value: 'qq.com', label: '@qq.com' },
-  { value: '163.com', label: '@163.com' },
-  { value: '126.com', label: '@126.com' },
-  { value: 'outlook.com', label: '@outlook.com' },
-  { value: 'hotmail.com', label: '@hotmail.com' },
-  { value: 'yahoo.com', label: '@yahoo.com' },
-  { value: 'icloud.com', label: '@icloud.com' },
-  { value: 'sina.com', label: '@sina.com' },
-  { value: 'sohu.com', label: '@sohu.com' },
 ]
 
 export default function SurveyForm() {
@@ -84,38 +85,40 @@ export default function SurveyForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      emailUsername: '',
-      emailDomain: 'gmail.com',
-      contact: '',
+      email: '',
+      acceptFollowUp: '',
       age: '',
       gender: '',
+      genderSelfDescribe: '',
       orientation: '',
+      orientationSelfDescribe: '',
       ao3Content: '',
       favoriteCpTags: '',
       identity: [],
       otherIdentity: '',
-      acceptFollowUp: '',
     },
   })
 
-  // Watch identity values to show conditional input
+  // Watch values to show conditional inputs
   const identityValues = form.watch('identity')
+  const genderValue = form.watch('gender')
+  const orientationValue = form.watch('orientation')
+  
   const showOtherInput = identityValues?.includes('other') || identityValues?.includes('professional')
+  const showGenderSelfDescribe = genderValue === 'self-describe'
+  const showOrientationSelfDescribe = orientationValue === 'self-describe'
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true)
     try {
-      // Combine full email address
-      const email = `${values.emailUsername}@${values.emailDomain}`
-      
-      // Create submission data with full email address
+      // Create submission data
       const submitData = {
         name: values.name,
-        email: email,
-        contact: values.contact,
+        email: values.email,
+        contact: '', // Not collected in new form
         age: values.age,
-        gender: values.gender,
-        orientation: values.orientation,
+        gender: values.gender === 'self-describe' ? (values.genderSelfDescribe || '') : values.gender,
+        orientation: values.orientation === 'self-describe' ? (values.orientationSelfDescribe || '') : values.orientation,
         ao3Content: values.ao3Content || '',
         favoriteCpTags: values.favoriteCpTags || '',
         identity: values.identity,
@@ -133,7 +136,7 @@ export default function SurveyForm() {
 
       if (response.ok) {
         // Submission successful, switch to success state
-        setSubmittedEmail(email)
+        setSubmittedEmail(values.email)
         setIsSubmitted(true)
         toast.success('Survey submitted successfully! Beta account will be sent to your email')
       } else {
@@ -198,7 +201,7 @@ export default function SurveyForm() {
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
-            <span>Discover your favorite CPs and content</span>
+            <span>Discover your favorite ships and content</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
@@ -210,7 +213,7 @@ export default function SurveyForm() {
       {/* Thank you message */}
       <div className="space-y-4">
         <p className="text-lg text-gray-700">
-          Let's create a world where even niche CPs can thrive!
+          Let's work together to create a world where even the rarest ships can thrive!
         </p>
         <p className="text-sm text-gray-500">
           If you have any questions, please contact our support team
@@ -233,12 +236,11 @@ export default function SurveyForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                1. What should we call you?
+              <FormLabel className="text-lg font-medium">
+                1. How should we address you?
               </FormLabel>
               <FormControl>
-                <Input placeholder="Please enter your name" {...field} />
+                <Input placeholder="NickName" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -246,62 +248,53 @@ export default function SurveyForm() {
         />
 
         {/* 2. Email */}
-        <div className="space-y-4">
-          <FormLabel className="text-lg font-medium flex items-center">
-            <span className="text-red-500 mr-1">*</span>
-            2. Email for receiving beta account
-          </FormLabel>
-          <div className="flex space-x-2">
-            <FormField
-              control={form.control}
-              name="emailUsername"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormControl>
-                    <Input placeholder="Enter email username" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="emailDomain"
-              render={({ field }) => (
-                <FormItem className="w-48">
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value || 'gmail.com'}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select email type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {emailDomainOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* 3. Contact */}
         <FormField
           control={form.control}
-          name="contact"
+          name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                3. Your phone number/WeChat (for beta testing only)
+              <FormLabel className="text-lg font-medium">
+                2. Email for receiving internal test account:
               </FormLabel>
               <FormControl>
-                <Input placeholder="Please enter your phone number or WeChat" {...field} />
+                <Input placeholder="your.email@example.com" type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* 3. Follow-up interview */}
+        <FormField
+          control={form.control}
+          name="acceptFollowUp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-lg font-medium">
+                3. Are you willing to accept follow-up interviews from our develop teams by email?
+              </FormLabel>
+              <p className="text-sm text-gray-600 mb-3">
+                If not, you won't receive any emails except one to inform your testing account.
+              </p>
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="followup-yes" />
+                    <label htmlFor="followup-yes" className="cursor-pointer">
+                      Yes
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="followup-no" />
+                    <label htmlFor="followup-no" className="cursor-pointer">
+                      No
+                    </label>
+                  </div>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -314,9 +307,8 @@ export default function SurveyForm() {
           name="age"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                4. Your age
+              <FormLabel className="text-lg font-medium">
+                4. Your age:
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -345,10 +337,12 @@ export default function SurveyForm() {
           name="gender"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                5. Your gender
+              <FormLabel className="text-lg font-medium">
+                5. How would you describe your current gender identity?
               </FormLabel>
+              <p className="text-sm text-gray-600 mb-3">
+                We ask this to ensure Vaniloom serves readers of every identity; your responses are confidential and analysed only in aggregate.
+              </p>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -366,6 +360,25 @@ export default function SurveyForm() {
                 </RadioGroup>
               </FormControl>
               <FormMessage />
+              
+              {/* Self-describe input for gender */}
+              {showGenderSelfDescribe && (
+                <FormField
+                  control={form.control}
+                  name="genderSelfDescribe"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormControl>
+                        <Input
+                          placeholder="Please describe your gender identity"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </FormItem>
           )}
         />
@@ -376,10 +389,12 @@ export default function SurveyForm() {
           name="orientation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                6. Your sexual orientation (for beta research only, sorry if this seems intrusive!)
+              <FormLabel className="text-lg font-medium">
+                6. How would you describe your sexual orientation?
               </FormLabel>
+              <p className="text-sm text-gray-600 mb-3">
+                We ask this to ensure Vaniloom serves readers of every identity; your responses are confidential and analysed only in aggregate.
+              </p>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -397,6 +412,25 @@ export default function SurveyForm() {
                 </RadioGroup>
               </FormControl>
               <FormMessage />
+              
+              {/* Self-describe input for orientation */}
+              {showOrientationSelfDescribe && (
+                <FormField
+                  control={form.control}
+                  name="orientationSelfDescribe"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormControl>
+                        <Input
+                          placeholder="Please describe your sexual orientation"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </FormItem>
           )}
         />
@@ -407,12 +441,12 @@ export default function SurveyForm() {
           name="ao3Content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                7. What were the last 3 things you read on AO3? What time of day did you read them?
+              <FormLabel className="text-lg font-medium">
+                7. What were the last 3 works you read on AO3? At what time of day did you read them?
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Please describe your recent AO3 reading content and times (optional)"
+                  placeholder="Please describe your recent AO3 reading (optional)"
                   className="min-h-[120px]"
                   {...field}
                 />
@@ -422,18 +456,18 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 8. Favorite CP and tags (optional) */}
+        {/* 8. Favorite ships and tags (optional) */}
         <FormField
           control={form.control}
           name="favoriteCpTags"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                8. What are your favorite CPs and tags on AO3 or other fanfiction platforms? Feel free to recommend niche ones too!
+              <FormLabel className="text-lg font-medium">
+                8. What are your favorite ships and tags on AO3 or other fanfiction/derivative platforms? Feel free to share niche/rare ones too!
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Please share your favorite CPs and tags (optional)"
+                  placeholder="Please share your favorite ships and tags (optional)"
                   className="min-h-[120px]"
                   {...field}
                 />
@@ -449,9 +483,8 @@ export default function SurveyForm() {
           name="identity"
           render={() => (
             <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                9. Your identity [Multiple choice]
+              <FormLabel className="text-lg font-medium">
+                9. Your identity (Multiple choice)
               </FormLabel>
               <div className="space-y-3">
                 {identityOptions.map((option) => (
@@ -495,15 +528,12 @@ export default function SurveyForm() {
                   name="otherIdentity"
                   render={({ field }) => (
                     <FormItem className="mt-4">
-                      <FormLabel className="text-sm font-medium text-gray-600">
-                        {identityValues?.includes('professional') ? 'Please specify your position' : 'Please specify other identity'}
-                      </FormLabel>
                       <FormControl>
                         <Input
                           placeholder={
                             identityValues?.includes('professional') 
-                              ? "e.g.: Product Manager, Designer, Engineer, etc." 
-                              : "Please describe your identity in detail"
+                              ? "Please specify your job (e.g.: Product Manager, Designer, Engineer, etc.)" 
+                              : "Please specify your identity"
                           }
                           {...field}
                         />
@@ -517,45 +547,10 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 10. Follow-up interview */}
-        <FormField
-          control={form.control}
-          name="acceptFollowUp"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-lg font-medium flex items-center">
-                <span className="text-red-500 mr-1">*</span>
-                10. Are you willing to accept online follow-up interviews from our development team? (WeChat or online meeting)
-              </FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="followup-yes" />
-                    <label htmlFor="followup-yes" className="cursor-pointer">
-                      Yes, willing to accept follow-up interviews
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="followup-no" />
-                    <label htmlFor="followup-no" className="cursor-pointer">
-                      No, not willing to accept follow-up interviews
-                    </label>
-                  </div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* Thank you message */}
         <div className="bg-blue-50 p-6 rounded-lg">
-          <p className="text-blue-800 text-lg font-medium mb-2">
-            Thank you so much for participating in Vaniloom's early beta design! Let's create a world where even niche CPs can thrive! 🎉
+          <p className="text-blue-800 text-lg font-medium">
+            Thank you so much for participating in the early internal test of Vaniloom! Let's work together to create a world where even the rarest ships can thrive! 🎉
           </p>
         </div>
 

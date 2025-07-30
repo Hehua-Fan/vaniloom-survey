@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Vaniloom Beta User Survey",
-  description: "Vaniloom beta user survey for personalized fanfiction platform for North America",
+  description: "Welcome to the first round of internal beta testing for Vaniloom! Vaniloom is a personalized creative platform for fanfiction and derivative works.",
 };
 
 export default function RootLayout({
