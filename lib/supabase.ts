@@ -15,4 +15,22 @@ export interface BetaAccountRow {
   assigned_at: string | null
   created_at: string
   updated_at: string
+}
+
+export interface SurveyResponse {
+  id?: string
+  name: string
+  email: string
+  contact: string
+  age: string
+  gender: string
+  orientation: string
+  ao3_content?: string
+  favorite_cp_tags?: string
+  identity: string[]
+  other_identity?: string
+  accept_follow_up: string
+  assigned_account_id?: string
+  created_at?: string
+  updated_at?: string
 } 

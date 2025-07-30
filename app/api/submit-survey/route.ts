@@ -7,32 +7,33 @@ import {
   getAvailableAccountsCount 
 } from '@/lib/beta-accounts'
 import { sendBetaAccountEmail, sendSurveyFormToAdmin, SurveyFormData } from '@/lib/email'
+import { supabase, SurveyResponse } from '@/lib/supabase'
 
-// 验证表单数据的schema
+// Survey form data validation schema
 const surveySchema = z.object({
-  name: z.string().min(1, '请输入您的称呼'),
-  email: z.string().email('请输入有效的邮箱地址'),
-  contact: z.string().min(1, '请输入您的手机号或微信号'),
-  age: z.string().min(1, '请选择您的年龄'),
-  gender: z.string().min(1, '请选择您的性别'),
-  orientation: z.string().min(1, '请选择您的性取向'),
+  name: z.string().min(1, 'Please enter your name'),
+  email: z.string().email('Please enter a valid email address'),
+  contact: z.string().min(1, 'Please enter your phone number or WeChat'),
+  age: z.string().min(1, 'Please select your age'),
+  gender: z.string().min(1, 'Please select your gender'),
+  orientation: z.string().min(1, 'Please select your sexual orientation'),
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
-  identity: z.array(z.string()).min(1, '请至少选择一个身份'),
-  otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
-  acceptFollowUp: z.string().min(1, '请选择是否愿意接受回访'), // 新增：是否接受回访
+  identity: z.array(z.string()).min(1, 'Please select at least one identity'),
+  otherIdentity: z.string().optional(),
+  acceptFollowUp: z.string().min(1, 'Please select whether you accept follow-up interviews'),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // 验证请求数据
+    // Validate request data
     const validationResult = surveySchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
         { 
-          error: '表单数据验证失败', 
+          error: 'Form data validation failed', 
           details: validationResult.error.errors 
         },
         { status: 400 }
@@ -41,130 +42,157 @@ export async function POST(request: NextRequest) {
 
     const formData = validationResult.data
 
-    // 检查邮箱是否已经分配过账号
+    // Check if email has already been assigned an account
     const existingAccount = await isEmailAlreadyAssigned(formData.email)
     if (existingAccount) {
       return NextResponse.json(
         { 
-          error: '该邮箱已经获得过内测账号',
-          message: '每个邮箱只能申请一次内测账号，如有疑问请联系客服'
+          error: 'This email has already received a beta account',
+          message: 'Each email can only apply for one beta account. Please contact customer service if you have any questions'
         },
         { status: 409 }
       )
     }
 
-    // 检查是否还有可用的内测账号
+    // Check if there are available beta accounts
     const availableCount = await getAvailableAccountsCount()
     if (availableCount === 0) {
       return NextResponse.json(
         { 
-          error: '内测账号已全部分配完毕',
-          message: '非常抱歉，当前内测账号已全部分配完毕，请关注我们的后续公告'
+          error: 'All beta accounts have been assigned',
+          message: 'Sorry, all beta accounts have been assigned. Please follow our announcements for updates'
         },
         { status: 410 }
       )
     }
 
-    // 获取下一个可用账号
+    // Get next available account
     const availableAccount = await getNextAvailableAccount()
     if (!availableAccount) {
       return NextResponse.json(
         { 
-          error: '获取内测账号失败',
-          message: '系统错误，请稍后重试'
+          error: 'Failed to get beta account',
+          message: 'System error, please try again later'
         },
         { status: 500 }
       )
     }
 
-    // 分配账号
+    // Assign account
     const assignSuccess = await assignAccount(availableAccount.id, formData.email)
     if (!assignSuccess) {
       return NextResponse.json(
         { 
-          error: '分配账号失败',
-          message: '系统错误，请稍后重试'
+          error: 'Failed to assign account',
+          message: 'System error, please try again later'
         },
         { status: 500 }
       )
     }
 
-    // 发送用户邮件
+    // Save survey response to database
+    const surveyData: Omit<SurveyResponse, 'id' | 'created_at' | 'updated_at'> = {
+      name: formData.name,
+      email: formData.email,
+      contact: formData.contact,
+      age: formData.age,
+      gender: formData.gender,
+      orientation: formData.orientation,
+      ao3_content: formData.ao3Content || null,
+      favorite_cp_tags: formData.favoriteCpTags || null,
+      identity: formData.identity,
+      other_identity: formData.otherIdentity || null,
+      accept_follow_up: formData.acceptFollowUp,
+      assigned_account_id: availableAccount.id,
+    }
+
+    const { data: surveyResponse, error: surveyError } = await supabase
+      .from('survey_responses')
+      .insert([surveyData])
+      .select()
+
+    if (surveyError) {
+      console.error('Failed to save survey response:', surveyError)
+      // Don't fail the entire process if survey saving fails, but log it
+    }
+
+    // Send user email
     const userEmailSent = await sendBetaAccountEmail(
       formData.email,
       formData.name,
       availableAccount
     )
 
-    // 发送管理员邮件（表单内容）
+    // Send admin email (form content)
     const adminEmailSent = await sendSurveyFormToAdmin(
       formData as SurveyFormData,
       availableAccount
     )
 
-    // 根据邮件发送结果返回相应的响应
+    // Return response based on email sending results
     if (!userEmailSent && !adminEmailSent) {
-      console.error('用户邮件和管理员邮件都发送失败:', {
+      console.error('Both user and admin emails failed to send:', {
         email: formData.email,
         account: availableAccount.username
       })
       
       return NextResponse.json(
         { 
-          error: '邮件发送失败',
-          message: '您的内测账号已分配，但邮件发送失败。请联系客服获取账号信息。',
+          error: 'Email sending failed',
+          message: 'Your beta account has been assigned, but email sending failed. Please contact customer service for account information.',
           account: {
             username: availableAccount.username,
             password: availableAccount.password
           }
         },
-        { status: 207 } // Multi-Status: 部分成功
+        { status: 207 } // Multi-Status: partial success
       )
     } else if (!userEmailSent) {
-      console.error('用户邮件发送失败，但管理员邮件发送成功:', {
+      console.error('User email failed to send, but admin email sent successfully:', {
         email: formData.email,
         account: availableAccount.username
       })
       
       return NextResponse.json(
         { 
-          error: '用户邮件发送失败',
-          message: '您的内测账号已分配，但邮件发送失败。请联系客服获取账号信息。',
+          error: 'User email sending failed',
+          message: 'Your beta account has been assigned, but email sending failed. Please contact customer service for account information.',
           account: {
             username: availableAccount.username,
             password: availableAccount.password
           }
         },
-        { status: 207 } // Multi-Status: 部分成功
+        { status: 207 } // Multi-Status: partial success
       )
     } else if (!adminEmailSent) {
-      console.error('管理员邮件发送失败，但用户邮件发送成功:', {
+      console.error('Admin email failed to send, but user email sent successfully:', {
         email: formData.email,
         account: availableAccount.username
       })
       
-      // 用户邮件发送成功，管理员邮件失败不影响用户体验
-      console.log('管理员邮件发送失败，但不影响用户操作')
+      // User email sent successfully, admin email failure doesn't affect user experience
+      console.log('Admin email failed to send, but user operation not affected')
     }
 
-    // 记录提交信息（在实际项目中，你可能想要保存到数据库）
-    console.log('问卷提交成功:', {
+    // Log submission information
+    console.log('Survey submitted successfully:', {
       timestamp: new Date().toISOString(),
       email: formData.email,
       name: formData.name,
       assignedAccount: availableAccount.username,
       remainingAccounts: await getAvailableAccountsCount(),
       userEmailSent,
-      adminEmailSent
+      adminEmailSent,
+      surveyResponseId: surveyResponse?.[0]?.id || 'failed_to_save'
     })
 
     return NextResponse.json(
       { 
         success: true,
-        message: '问卷提交成功！内测账号已发送到您的邮箱',
+        message: 'Survey submitted successfully! Beta account has been sent to your email',
         accountInfo: {
           username: availableAccount.username,
-          // 出于安全考虑，在响应中不返回密码
+          // For security reasons, don't return password in response
         },
         remainingAccounts: await getAvailableAccountsCount()
       },
@@ -172,22 +200,22 @@ export async function POST(request: NextRequest) {
     )
 
   } catch (error) {
-    console.error('处理问卷提交时发生错误:', error)
+    console.error('Error processing survey submission:', error)
     
     return NextResponse.json(
       { 
-        error: '服务器内部错误',
-        message: '系统暂时出现问题，请稍后重试'
+        error: 'Internal server error',
+        message: 'System temporarily experiencing issues, please try again later'
       },
       { status: 500 }
     )
   }
 }
 
-// 处理不支持的HTTP方法
+// Handle unsupported HTTP methods
 export async function GET() {
   return NextResponse.json(
-    { error: '方法不被支持' },
+    { error: 'Method not supported' },
     { status: 405 }
   )
 } 

@@ -15,51 +15,51 @@ import { toast } from 'react-hot-toast'
 import { Loader2, CheckCircle, Mail } from 'lucide-react'
 
 const formSchema = z.object({
-  name: z.string().min(1, '请输入您的称呼'),
-  emailUsername: z.string().min(1, '请输入邮箱用户名'),
-  emailDomain: z.string().min(1, '请选择邮箱类型'),
-  contact: z.string().min(1, '请输入您的手机号或微信号'),
-  age: z.string().min(1, '请选择您的年龄'),
-  gender: z.string().min(1, '请选择您的性别'),
-  orientation: z.string().min(1, '请选择您的性取向'),
+  name: z.string().min(1, 'Please enter your name'),
+  emailUsername: z.string().min(1, 'Please enter email username'),
+  emailDomain: z.string().min(1, 'Please select email type'),
+  contact: z.string().min(1, 'Please enter your phone or WeChat'),
+  age: z.string().min(1, 'Please select your age'),
+  gender: z.string().min(1, 'Please select your gender'),
+  orientation: z.string().min(1, 'Please select your sexual orientation'),
   ao3Content: z.string().optional(),
   favoriteCpTags: z.string().optional(),
-  identity: z.array(z.string()).min(1, '请至少选择一个身份'),
-  otherIdentity: z.string().optional(), // 新增：其他身份的具体描述
-  acceptFollowUp: z.string().min(1, '请选择是否愿意接受回访'), // 新增：是否接受回访
+  identity: z.array(z.string()).min(1, 'Please select at least one identity'),
+  otherIdentity: z.string().optional(),
+  acceptFollowUp: z.string().min(1, 'Please select whether you accept follow-up interviews'),
 })
 
 type FormData = z.infer<typeof formSchema>
 
 const ageOptions = [
-  { value: 'under-12', label: '12岁以下' },
-  { value: '12-17', label: '12-17岁' },
-  { value: '18-22', label: '18-22岁' },
-  { value: '23-28', label: '23-28岁' },
-  { value: '29-34', label: '29-34岁' },
-  { value: '35-plus', label: '35岁及以上' },
-  { value: 'prefer-not-say', label: '不愿透露' },
+  { value: 'under-12', label: 'Under 12' },
+  { value: '12-17', label: '12-17' },
+  { value: '18-22', label: '18-22' },
+  { value: '23-28', label: '23-28' },
+  { value: '29-34', label: '29-34' },
+  { value: '35-plus', label: '35 and above' },
+  { value: 'prefer-not-say', label: 'Prefer not to say' },
 ]
 
 const genderOptions = [
-  { value: 'female', label: '女' },
-  { value: 'male', label: '男' },
-  { value: 'other', label: '其他' },
+  { value: 'female', label: 'Female' },
+  { value: 'male', label: 'Male' },
+  { value: 'other', label: 'Other' },
 ]
 
 const orientationOptions = [
-  { value: 'male', label: '男' },
-  { value: 'female', label: '女' },
-  { value: 'both', label: '双' },
-  { value: 'other', label: '其他' },
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'both', label: 'Both' },
+  { value: 'other', label: 'Other' },
 ]
 
 const identityOptions = [
-  { value: 'reader', label: '读者' },
-  { value: 'creator', label: '创作者' },
-  { value: 'professional', label: '相关从业者（请填写职位）' },
-  { value: 'investor', label: '投资人' },
-  { value: 'other', label: '其他（请填写）' },
+  { value: 'reader', label: 'Reader' },
+  { value: 'creator', label: 'Creator' },
+  { value: 'professional', label: 'Industry Professional (please specify position)' },
+  { value: 'investor', label: 'Investor' },
+  { value: 'other', label: 'Other (please specify)' },
 ]
 
 const emailDomainOptions = [
@@ -77,8 +77,8 @@ const emailDomainOptions = [
 
 export default function SurveyForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false) // 新增：提交成功状态
-  const [submittedEmail, setSubmittedEmail] = useState('') // 新增：记录提交的邮箱
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState('')
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -93,22 +93,22 @@ export default function SurveyForm() {
       ao3Content: '',
       favoriteCpTags: '',
       identity: [],
-      otherIdentity: '', // 新增默认值
-      acceptFollowUp: '', // 新增：回访选择默认值
+      otherIdentity: '',
+      acceptFollowUp: '',
     },
   })
 
-  // 监听身份选择，判断是否选择了"其他"或"相关从业者"
+  // Watch identity values to show conditional input
   const identityValues = form.watch('identity')
   const showOtherInput = identityValues?.includes('other') || identityValues?.includes('professional')
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true)
     try {
-      // 组合完整的邮箱地址
+      // Combine full email address
       const email = `${values.emailUsername}@${values.emailDomain}`
       
-      // 创建提交数据，包含完整邮箱地址
+      // Create submission data with full email address
       const submitData = {
         name: values.name,
         email: email,
@@ -119,8 +119,8 @@ export default function SurveyForm() {
         ao3Content: values.ao3Content || '',
         favoriteCpTags: values.favoriteCpTags || '',
         identity: values.identity,
-        otherIdentity: values.otherIdentity || '', // 包含其他身份描述
-        acceptFollowUp: values.acceptFollowUp, // 新增：是否接受回访
+        otherIdentity: values.otherIdentity || '',
+        acceptFollowUp: values.acceptFollowUp,
       }
 
       const response = await fetch('/api/submit-survey', {
@@ -132,108 +132,94 @@ export default function SurveyForm() {
       })
 
       if (response.ok) {
-        // 提交成功，切换到成功状态
+        // Submission successful, switch to success state
         setSubmittedEmail(email)
         setIsSubmitted(true)
-        toast.success('问卷提交成功！内测账号将发送到您的邮箱')
+        toast.success('Survey submitted successfully! Beta account will be sent to your email')
       } else {
         const errorData = await response.json()
-        toast.error(errorData.message || '提交失败，请重试')
+        toast.error(errorData.message || 'Submission failed, please try again')
       }
     } catch (error) {
       console.error('Error submitting form:', error)
-      toast.error('提交失败，请重试')
+      toast.error('Submission failed, please try again')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // 成功页面组件
+  // Success page component
   const SuccessPage = () => (
     <div className="max-w-2xl mx-auto text-center space-y-8 py-12">
-      {/* 成功图标 */}
+      {/* Success icon */}
       <div className="flex justify-center">
         <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center">
           <CheckCircle className="w-12 h-12 text-green-600" />
         </div>
       </div>
 
-      {/* 成功标题 */}
+      {/* Success title */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold text-gray-900">
-          🎉 提交成功！
+          🎉 Submission Successful!
         </h1>
         <p className="text-xl text-gray-600">
-          感谢您加入 Vaniloom 内测！
+          Thank you for joining the Vaniloom beta!
         </p>
       </div>
 
-      {/* 详细信息 */}
+      {/* Detailed information */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-4">
         <div className="flex items-center justify-center space-x-2 text-blue-800">
           <Mail className="w-5 h-5" />
-          <span className="font-medium">内测账号发送中</span>
+          <span className="font-medium">Beta account being sent</span>
         </div>
         <p className="text-blue-700">
-          您的内测账号将发送到：<span className="font-mono font-medium">{submittedEmail}</span>
+          Your beta account will be sent to: <span className="font-mono font-medium">{submittedEmail}</span>
         </p>
         <p className="text-sm text-blue-600">
-          请注意查收邮件，如果没有收到，请检查垃圾邮件文件夹
+          Please check your email. If you don't receive it, please check your spam folder
         </p>
       </div>
 
-      {/* 温馨提示 */}
+      {/* What's next */}
       <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 space-y-3">
         <h3 className="text-lg font-semibold text-purple-800">
-          🌟 接下来该做什么？
+          🌟 What's next?
         </h3>
         <ul className="text-left text-purple-700 space-y-2">
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
-            <span>查收邮件中的内测账号信息</span>
+            <span>Check your email for beta account information</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
-            <span>使用账号登录 Vaniloom 开始体验</span>
+            <span>Use the account to log in to Vaniloom and start exploring</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
-            <span>探索您喜欢的 CP 和内容</span>
+            <span>Discover your favorite CPs and content</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-purple-500 mt-1">•</span>
-            <span>给我们反馈，帮助我们改进产品</span>
+            <span>Give us feedback to help improve the product</span>
           </li>
         </ul>
       </div>
 
-      {/* 感谢信息 */}
+      {/* Thank you message */}
       <div className="space-y-4">
         <p className="text-lg text-gray-700">
-          让我们一起创造一个冷门 CP 都能吃上饭的世界！
+          Let's create a world where even niche CPs can thrive!
         </p>
         <p className="text-sm text-gray-500">
-          如有任何问题，请联系我们的客服团队
+          If you have any questions, please contact our support team
         </p>
-      </div>
-
-      {/* 返回按钮（可选） */}
-      <div className="pt-8">
-        <Button
-          onClick={() => {
-            setIsSubmitted(false)
-            form.reset()
-          }}
-          variant="outline"
-          className="px-8 py-2"
-        >
-          重新填写问卷
-        </Button>
       </div>
     </div>
   )
 
-  // 如果已提交成功，显示成功页面
+  // If submitted successfully, show success page
   if (isSubmitted) {
     return <SuccessPage />
   }
@@ -241,7 +227,7 @@ export default function SurveyForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* 1. 称呼 */}
+        {/* 1. Name */}
         <FormField
           control={form.control}
           name="name"
@@ -249,21 +235,21 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                1. 请问老师怎么称呼？
+                1. What should we call you?
               </FormLabel>
               <FormControl>
-                <Input placeholder="请输入您的称呼" {...field} />
+                <Input placeholder="Please enter your name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* 2. 邮箱 */}
+        {/* 2. Email */}
         <div className="space-y-4">
           <FormLabel className="text-lg font-medium flex items-center">
             <span className="text-red-500 mr-1">*</span>
-            2. 用于收取内测账号的邮箱
+            2. Email for receiving beta account
           </FormLabel>
           <div className="flex space-x-2">
             <FormField
@@ -272,7 +258,7 @@ export default function SurveyForm() {
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormControl>
-                    <Input placeholder="请输入邮箱用户名" {...field} />
+                    <Input placeholder="Enter email username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -286,7 +272,7 @@ export default function SurveyForm() {
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value || 'gmail.com'}>
                       <SelectTrigger>
-                        <SelectValue placeholder="选择邮箱类型" />
+                        <SelectValue placeholder="Select email type" />
                       </SelectTrigger>
                       <SelectContent>
                         {emailDomainOptions.map((option) => (
@@ -304,7 +290,7 @@ export default function SurveyForm() {
           </div>
         </div>
 
-        {/* 3. 联系方式 */}
+        {/* 3. Contact */}
         <FormField
           control={form.control}
           name="contact"
@@ -312,17 +298,17 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                3. 您的手机号/微信号（仅用于内测调查）
+                3. Your phone number/WeChat (for beta testing only)
               </FormLabel>
               <FormControl>
-                <Input placeholder="请输入您的手机号或微信号" {...field} />
+                <Input placeholder="Please enter your phone number or WeChat" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* 4. 年龄 */}
+        {/* 4. Age */}
         <FormField
           control={form.control}
           name="age"
@@ -330,7 +316,7 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                4. 您的年龄
+                4. Your age
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -353,7 +339,7 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 5. 性别 */}
+        {/* 5. Gender */}
         <FormField
           control={form.control}
           name="gender"
@@ -361,7 +347,7 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                5. 您的性别是
+                5. Your gender
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -384,7 +370,7 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 6. 性取向 */}
+        {/* 6. Sexual orientation */}
         <FormField
           control={form.control}
           name="orientation"
@@ -392,7 +378,7 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                6. 您的性取向是（仅供内测调查，如有冒犯深感抱歉！Orz）
+                6. Your sexual orientation (for beta research only, sorry if this seems intrusive!)
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -415,19 +401,18 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 7. ao3内容（非必填） */}
+        {/* 7. AO3 content (optional) */}
         <FormField
           control={form.control}
           name="ao3Content"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
-                {/* 非必填，不显示红色星号 */}
-                7. 您最近3次在ao3上看的内容是什么？是几点钟的时候看的？
+                7. What were the last 3 things you read on AO3? What time of day did you read them?
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="请详细描述您最近在ao3上的阅读内容和时间（可选）"
+                  placeholder="Please describe your recent AO3 reading content and times (optional)"
                   className="min-h-[120px]"
                   {...field}
                 />
@@ -437,19 +422,18 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 8. 喜欢的cp和tags（非必填） */}
+        {/* 8. Favorite CP and tags (optional) */}
         <FormField
           control={form.control}
           name="favoriteCpTags"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
-                {/* 非必填，不显示红色星号 */}
-                8. 您在ao3上或其他同人/二创平台上最喜欢的cp和tags是什么？冷门的也可以推荐给我们哦~
+                8. What are your favorite CPs and tags on AO3 or other fanfiction platforms? Feel free to recommend niche ones too!
               </FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="请分享您喜欢的cp和tags（可选）"
+                  placeholder="Please share your favorite CPs and tags (optional)"
                   className="min-h-[120px]"
                   {...field}
                 />
@@ -459,7 +443,7 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 9. 身份 */}
+        {/* 9. Identity */}
         <FormField
           control={form.control}
           name="identity"
@@ -467,7 +451,7 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                9. 您的身份【多选题】
+                9. Your identity [Multiple choice]
               </FormLabel>
               <div className="space-y-3">
                 {identityOptions.map((option) => (
@@ -504,7 +488,7 @@ export default function SurveyForm() {
               </div>
               <FormMessage />
               
-              {/* 动态显示的"其他"输入框 */}
+              {/* Dynamic "other" input field */}
               {showOtherInput && (
                 <FormField
                   control={form.control}
@@ -512,14 +496,14 @@ export default function SurveyForm() {
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormLabel className="text-sm font-medium text-gray-600">
-                        {identityValues?.includes('professional') ? '请填写具体职位' : '请填写其他身份'}
+                        {identityValues?.includes('professional') ? 'Please specify your position' : 'Please specify other identity'}
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder={
                             identityValues?.includes('professional') 
-                              ? "例如：产品经理、设计师、工程师等" 
-                              : "请详细描述您的身份"
+                              ? "e.g.: Product Manager, Designer, Engineer, etc." 
+                              : "Please describe your identity in detail"
                           }
                           {...field}
                         />
@@ -533,7 +517,7 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 10. 线上回访 */}
+        {/* 10. Follow-up interview */}
         <FormField
           control={form.control}
           name="acceptFollowUp"
@@ -541,7 +525,7 @@ export default function SurveyForm() {
             <FormItem>
               <FormLabel className="text-lg font-medium flex items-center">
                 <span className="text-red-500 mr-1">*</span>
-                10. 您是否愿意接受团队开发人员的线上回访？（微信或线上会议）
+                10. Are you willing to accept online follow-up interviews from our development team? (WeChat or online meeting)
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -552,13 +536,13 @@ export default function SurveyForm() {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="yes" id="followup-yes" />
                     <label htmlFor="followup-yes" className="cursor-pointer">
-                      是，愿意接受回访
+                      Yes, willing to accept follow-up interviews
                     </label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="followup-no" />
                     <label htmlFor="followup-no" className="cursor-pointer">
-                      否，不愿意接受回访
+                      No, not willing to accept follow-up interviews
                     </label>
                   </div>
                 </RadioGroup>
@@ -568,14 +552,14 @@ export default function SurveyForm() {
           )}
         />
 
-        {/* 感谢信息 */}
+        {/* Thank you message */}
         <div className="bg-blue-50 p-6 rounded-lg">
           <p className="text-blue-800 text-lg font-medium mb-2">
-            非常感谢您作为早期内测用户参与Vaniloom的设计！让我们一起创造一个冷门cp都能吃上饭的世界！🎉
+            Thank you so much for participating in Vaniloom's early beta design! Let's create a world where even niche CPs can thrive! 🎉
           </p>
         </div>
 
-        {/* 提交按钮 */}
+        {/* Submit button */}
         <div className="flex justify-center">
           <Button
             type="submit"
@@ -585,10 +569,10 @@ export default function SurveyForm() {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                提交中...
+                Submitting...
               </>
             ) : (
-              '提交'
+              'Submit'
             )}
           </Button>
         </div>

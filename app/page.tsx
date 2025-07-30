@@ -21,7 +21,7 @@ export default function RootPage() {
               <div className="w-4 h-4 bg-white"></div>
             </div>
           </div>
-          <h1 className="text-3xl font-bold mb-4">Vaniloom内测用户调查问卷</h1>
+          <h1 className="text-3xl font-bold mb-4">Vaniloom Beta User Survey</h1>
         </div>
       </div>
 
@@ -30,8 +30,8 @@ export default function RootPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="mb-8">
             <p className="text-gray-700 leading-relaxed">
-              欢迎参与Vaniloom的首轮内测！Vaniloom是面向北美的同人/二创的个性化创作平台，当前仅支持英文。
-              您的内测个人信息会被严格隐私保存，我们会在收到您的问卷后立即向您填写的微信或邮箱发送内测账号，感谢您的支持！
+              Welcome to Vaniloom's first beta test! Vaniloom is a personalized fanfiction/fan content creation platform for North America, currently supporting English only.
+              Your beta testing personal information will be kept strictly private. We will immediately send you a beta account to your WeChat or email after receiving your survey response. Thank you for your support!
             </p>
           </div>
           
