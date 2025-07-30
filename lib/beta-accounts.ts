@@ -5,36 +5,35 @@ export interface BetaAccount {
   username: string
   password: string
   isAssigned: boolean
-  assignedTo?: string
-  assignedAt?: Date
+  assignedTo: string | null
+  assignedAt: Date | null
 }
 
-// 转换数据库行为应用层对象
+// Convert database row to application layer object
 function convertRowToAccount(row: BetaAccountRow): BetaAccount {
   return {
     id: row.id,
     username: row.username,
     password: row.password,
     isAssigned: row.is_assigned,
-    assignedTo: row.assigned_to || undefined,
-    assignedAt: row.assigned_at ? new Date(row.assigned_at) : undefined,
+    assignedTo: row.assigned_to,
+    assignedAt: row.assigned_at ? new Date(row.assigned_at) : null,
   }
 }
 
-// 转换应用层对象为数据库行
-function convertAccountToRow(account: BetaAccount): Partial<BetaAccountRow> {
+// Convert application layer object to database row
+function convertAccountToRow(account: Partial<BetaAccount>): Partial<BetaAccountRow> {
   return {
     id: account.id,
     username: account.username,
     password: account.password,
     is_assigned: account.isAssigned,
-    assigned_to: account.assignedTo || null,
-    assigned_at: account.assignedAt ? account.assignedAt.toISOString() : null,
-    updated_at: new Date().toISOString(),
+    assigned_to: account.assignedTo,
+    assigned_at: account.assignedAt?.toISOString() || null,
   }
 }
 
-// 获取下一个可用的内测账号
+// Get next available beta account
 export async function getNextAvailableAccount(): Promise<BetaAccount | null> {
   try {
     const { data, error } = await supabase
@@ -43,50 +42,50 @@ export async function getNextAvailableAccount(): Promise<BetaAccount | null> {
       .eq('is_assigned', false)
       .order('id', { ascending: true })
       .limit(1)
-      .single()
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        // 没有找到未分配的账号
-        return null
-      }
       throw error
     }
 
-    return convertRowToAccount(data)
+    if (!data || data.length === 0) {
+      // No unassigned accounts found
+      return null
+    }
+
+    return convertRowToAccount(data[0])
   } catch (error) {
-    console.error('获取可用账号失败:', error)
+    console.error('Failed to get available account:', error)
     return null
   }
 }
 
-// 分配账号给用户
-export async function assignAccount(accountId: string, userEmail: string): Promise<boolean> {
+// Assign account to user
+export async function assignAccount(accountId: string, email: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('beta_accounts')
       .update({
         is_assigned: true,
-        assigned_to: userEmail,
+        assigned_to: email,
         assigned_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .eq('id', accountId)
-      .eq('is_assigned', false) // 确保只更新未分配的账号
+      .eq('is_assigned', false) // Ensure only unassigned accounts are updated
 
     if (error) {
-      console.error('分配账号失败:', error)
+      console.error('Failed to assign account:', error)
       return false
     }
 
     return true
   } catch (error) {
-    console.error('分配账号失败:', error)
+    console.error('Failed to assign account:', error)
     return false
   }
 }
 
-// 检查邮箱是否已经分配过账号
+// Check if email has already been assigned an account
 export async function isEmailAlreadyAssigned(email: string): Promise<BetaAccount | null> {
   try {
     const { data, error } = await supabase
@@ -94,24 +93,25 @@ export async function isEmailAlreadyAssigned(email: string): Promise<BetaAccount
       .select('*')
       .eq('assigned_to', email)
       .eq('is_assigned', true)
-      .single()
+      .limit(1)
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        // 没有找到已分配给该邮箱的账号
-        return null
-      }
       throw error
     }
 
-    return convertRowToAccount(data)
+    if (!data || data.length === 0) {
+      // No account assigned to this email found
+      return null
+    }
+
+    return convertRowToAccount(data[0])
   } catch (error) {
-    console.error('检查邮箱分配状态失败:', error)
+    console.error('Failed to check email assignment status:', error)
     return null
   }
 }
 
-// 获取可用账号数量
+// Get available account count
 export async function getAvailableAccountsCount(): Promise<number> {
   try {
     const { count, error } = await supabase
@@ -120,18 +120,18 @@ export async function getAvailableAccountsCount(): Promise<number> {
       .eq('is_assigned', false)
 
     if (error) {
-      console.error('获取可用账号数量失败:', error)
+      console.error('Failed to get available account count:', error)
       return 0
     }
 
     return count || 0
   } catch (error) {
-    console.error('获取可用账号数量失败:', error)
+    console.error('Failed to get available account count:', error)
     return 0
   }
 }
 
-// 获取所有账号状态（管理员功能）
+// Get all account status (admin function)
 export async function getAllAccounts(): Promise<BetaAccount[]> {
   try {
     const { data, error } = await supabase
@@ -140,19 +140,19 @@ export async function getAllAccounts(): Promise<BetaAccount[]> {
       .order('id', { ascending: true })
 
     if (error) {
-      console.error('获取所有账号失败:', error)
+      console.error('Failed to get all accounts:', error)
       return []
     }
 
-    return data.map(convertRowToAccount)
+    return data ? data.map(convertRowToAccount) : []
   } catch (error) {
-    console.error('获取所有账号失败:', error)
+    console.error('Failed to get all accounts:', error)
     return []
   }
 }
 
-// 重置账号状态（管理员功能）
-export async function resetAccountsState(): Promise<void> {
+// Reset account status (admin function)
+export async function resetAllAccounts(): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('beta_accounts')
@@ -160,18 +160,19 @@ export async function resetAccountsState(): Promise<void> {
         is_assigned: false,
         assigned_to: null,
         assigned_at: null,
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-      .neq('id', '0') // 更新所有记录
+      .neq('id', '0') // Update all records
 
     if (error) {
-      console.error('重置账号状态失败:', error)
-      throw error
+      console.error('Failed to reset account status:', error)
+      return false
     }
 
-    console.log('所有账号状态已重置')
+    console.log('All account statuses have been reset')
+    return true
   } catch (error) {
-    console.error('重置账号状态失败:', error)
-    throw error
+    console.error('Failed to reset account status:', error)
+    return false
   }
 } 

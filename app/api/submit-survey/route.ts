@@ -6,7 +6,7 @@ import {
   isEmailAlreadyAssigned,
   getAvailableAccountsCount 
 } from '@/lib/beta-accounts'
-import { sendBetaAccountEmail, sendSurveyFormToAdmin, SurveyFormData } from '@/lib/email'
+import { sendBetaAccountEmail } from '@/lib/email'
 import { supabase, SurveyResponse } from '@/lib/supabase'
 
 // Survey form data validation schema
@@ -98,10 +98,10 @@ export async function POST(request: NextRequest) {
       age: formData.age,
       gender: formData.gender,
       orientation: formData.orientation,
-      ao3_content: formData.ao3Content || null,
-      favorite_cp_tags: formData.favoriteCpTags || null,
+      ao3_content: formData.ao3Content || undefined,
+      favorite_cp_tags: formData.favoriteCpTags || undefined,
       identity: formData.identity,
-      other_identity: formData.otherIdentity || null,
+      other_identity: formData.otherIdentity || undefined,
       accept_follow_up: formData.acceptFollowUp,
       assigned_account_id: availableAccount.id,
     }
@@ -123,32 +123,9 @@ export async function POST(request: NextRequest) {
       availableAccount
     )
 
-    // Send admin email (form content)
-    const adminEmailSent = await sendSurveyFormToAdmin(
-      formData as SurveyFormData,
-      availableAccount
-    )
-
-    // Return response based on email sending results
-    if (!userEmailSent && !adminEmailSent) {
-      console.error('Both user and admin emails failed to send:', {
-        email: formData.email,
-        account: availableAccount.username
-      })
-      
-      return NextResponse.json(
-        { 
-          error: 'Email sending failed',
-          message: 'Your beta account has been assigned, but email sending failed. Please contact customer service for account information.',
-          account: {
-            username: availableAccount.username,
-            password: availableAccount.password
-          }
-        },
-        { status: 207 } // Multi-Status: partial success
-      )
-    } else if (!userEmailSent) {
-      console.error('User email failed to send, but admin email sent successfully:', {
+    // Return response based on email sending result
+    if (!userEmailSent) {
+      console.error('User email failed to send:', {
         email: formData.email,
         account: availableAccount.username
       })
@@ -164,14 +141,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 207 } // Multi-Status: partial success
       )
-    } else if (!adminEmailSent) {
-      console.error('Admin email failed to send, but user email sent successfully:', {
-        email: formData.email,
-        account: availableAccount.username
-      })
-      
-      // User email sent successfully, admin email failure doesn't affect user experience
-      console.log('Admin email failed to send, but user operation not affected')
     }
 
     // Log submission information
@@ -182,7 +151,6 @@ export async function POST(request: NextRequest) {
       assignedAccount: availableAccount.username,
       remainingAccounts: await getAvailableAccountsCount(),
       userEmailSent,
-      adminEmailSent,
       surveyResponseId: surveyResponse?.[0]?.id || 'failed_to_save'
     })
 

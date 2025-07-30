@@ -5,7 +5,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-// 数据库表结构类型定义
+// Database table structure type definitions
 export interface BetaAccountRow {
   id: string
   username: string
